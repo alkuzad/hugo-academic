@@ -15,17 +15,26 @@
     {{ if $page.Params.email_form }}
 
     {{ $post_action := "" }}
+    {{ $honeypot_field := "" }}
+    {{ $recaptcha_field := "" }}
     {{ if eq $page.Params.email_form 1 }}
       {{ $post_action = "netlify" }}
+      {{ if eq $page.Params.email_form_honeypot true }}
+        {{ $honeypot_field = "netlify-honeypot=\"_gotcha\"" }}
+      {{ end }}
+
+      {{ if eq $page.Params.email_form_recaptcha true }}
+        {{ $recaptcha_field = "data-netlify-recaptcha=\"true\""}}
+      {{ end }}
     {{ else }}
       {{ if not $data.email }}
         {{ errorf "Please set an email address for the contact form using the `email` parameter in `params.toml`. Otherwise, set `email_form = 0` to disable the contact form." }}
       {{ end }}
       {{ $post_action = printf "action=\"https://formspree.io/%s\"" $data.email }}
-    {{end}}
+    {{ end }}
 
     <div class="mb-3">
-      <form name="contact" method="POST" {{ $post_action | safeHTMLAttr }}>
+      <form name="contact" method="POST" {{ $post_action | safeHTMLAttr }} {{ $honeypot_field | safeHTMLAttr }} {{ $recaptcha_field | safeHTMLAttr }} >
         <div class="form-group form-inline">
           <label class="sr-only" for="inputName">{{ i18n "contact_name" }}</label>
           <input type="text" name="name" class="form-control w-100" id="inputName" placeholder="{{ i18n "contact_name" | default "Name" }}" required>
@@ -38,6 +47,16 @@
           <label class="sr-only" for="inputMessage">{{ i18n "contact_message" }}</label>
           <textarea name="message" class="form-control" id="inputMessage" rows="5" placeholder="{{ i18n "contact_message" | default "Message" }}" required></textarea>
         </div>
+        {{ if eq $page.Params.email_form_honeypot true }}
+        <p style="display:none">
+          <input name="_gotcha" />
+        </p>
+        {{ end }}
+        {{ if eq $page.Params.email_form_recaptcha true }}
+          {{ if eq $page.Params.email_form 1 }}
+        <div data-netlify-recaptcha="true"></div>
+          {{ end }}
+        {{ end }}
         <button type="submit" class="btn btn-outline-primary px-3 py-2">{{ i18n "contact_send" | default "Send" }}</button>
       </form>
     </div>
